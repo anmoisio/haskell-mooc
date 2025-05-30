@@ -39,7 +39,11 @@ import Mooc.Todo
 --   buildList 7 0 3 ==> [3]
 
 buildList :: Int -> Int -> Int -> [Int]
-buildList start count end = todo
+-- buildList start count end = adding [end] start count
+--                             where adding sofar s c = if c == 0 then sofar
+--                                                     else adding (s : sofar) s (c-1)
+buildList _ 0 end           = [end]
+buildList start count end   = start : buildList start (count-1) end
 
 ------------------------------------------------------------------------------
 -- Ex 2: given i, build the list of sums [1, 1+2, 1+2+3, .., 1+2+..+i]
@@ -49,7 +53,11 @@ buildList start count end = todo
 -- Ps. you'll probably need a recursive helper function
 
 sums :: Int -> [Int]
-sums i = todo
+sums i = thesum 0 1 i
+
+thesum :: Int -> Int -> Int -> [Int]
+thesum accum k max = if k == max then [accum + k]
+                     else accum + k : thesum (accum + k) (k+1) max
 
 ------------------------------------------------------------------------------
 -- Ex 3: define a function mylast that returns the last value of the
@@ -63,7 +71,9 @@ sums i = todo
 --   mylast 0 [1,2,3] ==> 3
 
 mylast :: a -> [a] -> a
-mylast def xs = todo
+mylast def [] = def
+mylast def [x] = x
+mylast def (x:xs) = mylast def xs
 
 ------------------------------------------------------------------------------
 -- Ex 4: safe list indexing. Define a function indexDefault so that
@@ -81,7 +91,9 @@ mylast def xs = todo
 --   indexDefault ["a","b","c"] (-1) "d" ==> "d"
 
 indexDefault :: [a] -> Int -> a -> a
-indexDefault xs i def = todo
+indexDefault [] _ def = def
+indexDefault (x:xs) 0 def = x
+indexDefault (x:xs) i def = indexDefault xs (i-1) def
 
 ------------------------------------------------------------------------------
 -- Ex 5: define a function that checks if the given list is in
@@ -97,7 +109,9 @@ indexDefault xs i def = todo
 --   sorted [7,2,7] ==> False
 
 sorted :: [Int] -> Bool
-sorted xs = todo
+sorted [] = True
+sorted (x:[]) = True
+sorted (i:j:xs) = j >= i && sorted (j:xs)
 
 ------------------------------------------------------------------------------
 -- Ex 6: compute the partial sums of the given list like this:
@@ -109,7 +123,8 @@ sorted xs = todo
 -- Use pattern matching and recursion (and the list constructors : and [])
 
 sumsOf :: [Int] -> [Int]
-sumsOf xs = todo
+sumsOf [] = []
+sumsOf (x:xs) = todo
 
 ------------------------------------------------------------------------------
 -- Ex 7: implement the function merge that merges two sorted lists of

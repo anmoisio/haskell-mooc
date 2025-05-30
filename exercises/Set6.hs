@@ -13,7 +13,12 @@ data Country = Finland | Switzerland | Norway
   deriving Show
 
 instance Eq Country where
-  (==) = todo
+  Finland == Finland = True
+  Finland == _ = False
+  Switzerland == Switzerland = True
+  Switzerland == _ = False
+  Norway == Norway = True
+  Norway == _ = False
 
 ------------------------------------------------------------------------------
 -- Ex 2: implement an Ord instance for Country so that
@@ -21,11 +26,14 @@ instance Eq Country where
 --
 -- Remember minimal complete definitions!
 
+
+-- “Minimal complete definition: either compare or <=.”
 instance Ord Country where
-  compare = todo -- implement me?
-  (<=) = todo -- and me?
-  min = todo -- and me?
-  max = todo -- and me?
+  (<=) Finland _ = True
+  (<=) Norway Finland = False
+  (<=) Norway _ = True
+  (<=) Switzerland Switzerland = True
+  (<=) Switzerland _ = False
 
 ------------------------------------------------------------------------------
 -- Ex 3: Implement an Eq instance for the type Name which contains a String.
@@ -41,7 +49,7 @@ data Name = Name String
   deriving Show
 
 instance Eq Name where
-  (==) = todo
+  Name x == Name y = map toLower x == map toLower y
 
 ------------------------------------------------------------------------------
 -- Ex 4: here is a list type parameterized over the type it contains.
@@ -55,7 +63,11 @@ data List a = Empty | LNode a (List a)
   deriving Show
 
 instance Eq a => Eq (List a) where
-  (==) = todo
+  (==) Empty Empty = True
+  (==) Empty _ = False
+  (==) _ Empty = False
+  (==) (LNode x xs) (LNode y ys) = x == y && xs == ys
+
 
 ------------------------------------------------------------------------------
 -- Ex 5: below you'll find two datatypes, Egg and Milk. Implement a
@@ -75,6 +87,15 @@ data Egg = ChickenEgg | ChocolateEgg
 data Milk = Milk Int -- amount in litres
   deriving Show
 
+class Price a where
+    price :: a -> Int
+
+instance Price Egg where
+    price ChickenEgg = 20
+    price ChocolateEgg = 30
+
+instance Price Milk where
+    price (Milk l) = 15 * l
 
 ------------------------------------------------------------------------------
 -- Ex 6: define the necessary instance hierarchy in order to be able
@@ -84,6 +105,15 @@ data Milk = Milk Int -- amount in litres
 -- price [Milk 1, Milk 2]  ==> 45
 -- price [Just ChocolateEgg, Nothing, Just ChickenEgg]  ==> 50
 -- price [Nothing, Nothing, Just (Milk 1), Just (Milk 2)]  ==> 45
+
+-- constraint 'Price a' says that this only works for the members of the Price class
+instance Price a => Price (Maybe a) where
+    price Nothing = 0
+    price (Just x) = price x
+
+instance Price a => Price [a] where
+    price [] = 0
+    price (x:xs) = price x + price xs
 
 
 ------------------------------------------------------------------------------
@@ -95,6 +125,12 @@ data Milk = Milk Int -- amount in litres
 
 data Number = Finite Integer | Infinite
   deriving (Show,Eq)
+
+instance Ord Number where
+    (<=) (Finite x) (Finite y) = x <= y
+    (<=) Infinite (Finite _) = False
+    (<=) (Finite _) Infinite = True
+    (<=) Infinite Infinite = True
 
 
 ------------------------------------------------------------------------------
@@ -121,7 +157,7 @@ data RationalNumber = RationalNumber Integer Integer
   deriving Show
 
 instance Eq RationalNumber where
-  p == q = todo
+  (RationalNumber a b) == (RationalNumber c d) = a*d == b*c
 
 ------------------------------------------------------------------------------
 -- Ex 9: implement the function simplify, which simplifies a rational
@@ -141,7 +177,7 @@ instance Eq RationalNumber where
 -- Hint: Remember the function gcd?
 
 simplify :: RationalNumber -> RationalNumber
-simplify p = todo
+simplify (RationalNumber a b) = RationalNumber (div a (gcd a b)) (div b (gcd a b))
 
 ------------------------------------------------------------------------------
 -- Ex 10: implement the typeclass Num for RationalNumber. The results
@@ -162,12 +198,15 @@ simplify p = todo
 --   signum (RationalNumber 0 2)             ==> RationalNumber 0 1
 
 instance Num RationalNumber where
-  p + q = todo
-  p * q = todo
-  abs q = todo
-  signum q = todo
-  fromInteger x = todo
-  negate q = todo
+  (RationalNumber a b) + (RationalNumber c d) = simplify (RationalNumber ((a*d) + (c*b)) (b * d))
+  (RationalNumber a b) * (RationalNumber c d) = simplify (RationalNumber (a*c) (b*d))
+  abs (RationalNumber a b) = RationalNumber (abs a) (abs b)
+  signum (RationalNumber a b)
+        | div a b < 0 = RationalNumber (-1) 1
+        | a == 0 = RationalNumber 0 1
+        | otherwise = RationalNumber 1 1
+  fromInteger x = RationalNumber x 1
+  negate (RationalNumber q p) = RationalNumber (-q) p
 
 ------------------------------------------------------------------------------
 -- Ex 11: a class for adding things. Define a class Addable with a
@@ -181,7 +220,17 @@ instance Num RationalNumber where
 --   add 1 zero             ==>  1
 --   add [1,2] [3,4]        ==>  [1,2,3,4]
 --   add zero [True,False]  ==>  [True,False]
+class Addable a where
+    zero :: a
+    add :: a -> a -> a
 
+instance Addable Integer where
+    zero = 0
+    add x y = x + y
+
+instance Addable [a] where
+    zero = []
+    add x y = x ++ y -- currying this:   add = (++)
 
 ------------------------------------------------------------------------------
 -- Ex 12: cycling. Implement a type class Cycle that contains a
@@ -213,3 +262,19 @@ data Color = Red | Green | Blue
 data Suit = Club | Spade | Diamond | Heart
   deriving (Show, Eq)
 
+class Cycle a where
+    step :: a -> a
+    stepMany :: Int -> a -> a
+    stepMany n x = if n == 0 then x
+                    else stepMany (n-1) (step x)
+
+instance Cycle Color where
+    step Red = Green
+    step Green = Blue
+    step Blue = Red
+
+instance Cycle Suit where
+    step Club = Spade
+    step Spade = Diamond
+    step Diamond = Heart
+    step Heart = Club
