@@ -124,7 +124,11 @@ sorted (i:j:xs) = j >= i && sorted (j:xs)
 
 sumsOf :: [Int] -> [Int]
 sumsOf [] = []
-sumsOf (x:xs) = todo
+sumsOf l = helper 0 l
+
+helper :: Int -> [Int] -> [Int]
+helper sofar [x] = [x + sofar]
+helper sofar (x:xs) = sofar + x : helper (sofar + x) xs
 
 ------------------------------------------------------------------------------
 -- Ex 7: implement the function merge that merges two sorted lists of
@@ -137,7 +141,13 @@ sumsOf (x:xs) = todo
 --   merge [1,1,6] [1,2]   ==> [1,1,1,2,6]
 
 merge :: [Int] -> [Int] -> [Int]
-merge xs ys = todo
+merge [] ys = ys
+merge xs [] = xs
+merge (x:xs) (y:ys) =
+    if x > y then
+        y : merge (x:xs) ys
+    else
+        x : merge xs (y:ys)
 
 ------------------------------------------------------------------------------
 -- Ex 8: compute the biggest element, using a comparison function
@@ -161,7 +171,13 @@ merge xs ys = todo
 --     ==> ("Mouse",8)
 
 mymaximum :: (a -> a -> Bool) -> a -> [a] -> a
-mymaximum bigger initial xs = todo
+mymaximum bigger initial [] = initial
+mymaximum bigger initial (x:xs) =
+    if bigger x initial then
+        mymaximum bigger x xs
+    else
+        mymaximum bigger initial xs
+
 
 ------------------------------------------------------------------------------
 -- Ex 9: define a version of map that takes a two-argument function
@@ -175,7 +191,9 @@ mymaximum bigger initial xs = todo
 -- Use recursion and pattern matching. Do not use any library functions.
 
 map2 :: (a -> b -> c) -> [a] -> [b] -> [c]
-map2 f as bs = todo
+map2 f [] _ = []
+map2 f _ [] = []
+map2 f (a:as) (b:bs) = f a b : map2 f as bs
 
 ------------------------------------------------------------------------------
 -- Ex 10: implement the function maybeMap, which works a bit like a
@@ -199,4 +217,11 @@ map2 f as bs = todo
 --   ==> []
 
 maybeMap :: (a -> Maybe b) -> [a] -> [b]
-maybeMap f xs = todo
+maybeMap f [] = []
+maybeMap f (x:xs) = helper2 (f x) f xs
+
+helper2 :: Maybe b -> (a -> Maybe b) -> [a] -> [b]
+helper2 Nothing f [] = []
+helper2 (Just y) f [] = [y]
+helper2 (Just y) f (x:xs) = y : helper2 (f x) f xs
+helper2 Nothing  f (x:xs) =     helper2 (f x) f xs
